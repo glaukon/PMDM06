@@ -3,33 +3,38 @@ package com.daw.tarea_06;
 import androidx.appcompat.app.AppCompatActivity;
 
 
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.MediaController;
 import android.widget.SeekBar;
 
 public class MainActivity extends AppCompatActivity {
     MediaPlayer mp;
     private   Handler mHandler;
     private Runnable mUpdateSeekbar;
-
-
+    private SeekBar seekBarVolumen;
+    private final int respuestaMusica=1001;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity1);
         mp = MediaPlayer.create(this, R.raw.terra);
-        Button btnvolumen;
+        seekBarVolumen = (SeekBar) findViewById(R.id.seekBarVolumen);
+        seekBarVolumen.setProgress(100);
+        mp.setVolume(1.0f,1.0f);
         ImageButton btnPlay = (ImageButton) findViewById(R.id.btn_play);
         SeekBar sbDesplazar = (SeekBar) findViewById(R.id.seekBar);
         ImageButton btnAdelante  = (ImageButton) findViewById(R.id.btnAdelante);
-        ImageButton btnStop = (ImageButton) findViewById(R.id.btn_Stop);
+        ImageButton btnStop = (ImageButton) findViewById(R.id.btnStop);
+        ImageButton btnExplorador = (ImageButton) findViewById(R.id.explorador);
+
 
         mHandler = new Handler();
         mUpdateSeekbar = new Runnable() {
@@ -68,6 +73,38 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        btnExplorador.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent fileintent = new Intent(Intent.ACTION_GET_CONTENT);
+                fileintent.setType("audio/*");
+                try {
+                    startActivityForResult(fileintent, respuestaMusica);
+                } catch (ActivityNotFoundException e) {
+
+                }
+            }
+        });
+        seekBarVolumen.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(fromUser){
+                    float nuevaPosicion = (float)progress/100;
+                    mp.setVolume(nuevaPosicion,nuevaPosicion);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
         sbDesplazar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -100,6 +137,23 @@ public class MainActivity extends AppCompatActivity {
         // mp.start();
 
 
-    }
 
+    }
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (data == null) return;
+        switch (requestCode) {
+            case 1001:
+                if (resultCode == RESULT_OK ) {
+                    Uri filePath = data.getData();
+                    //Log.e("andres",filePath);
+                    mp.stop();
+                    mp.release();
+                    mp = MediaPlayer.create(this, filePath);
+                    seekBarVolumen.setProgress(100);
+                    mp.setVolume(1.0f,1.0f);
+
+                }
+        }
+    }
 }
